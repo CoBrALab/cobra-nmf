@@ -8,33 +8,68 @@ from scipy.io import savemat
 
 import sys
 
+parser=argparse.ArgumentParser(
+    description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
+    in .mat format''')
+
+parser.add_argument(
+    "metric",help="metric to extract", metavar='T1T2',required=True)
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument(
+    '--lookup', metavar='.csv',help='csv file with two columns (Label_val, Label),
+    containing label number and name pairings',required=True)
+group.add_argument('--subjdir',help='directory containing t1t2 and label images for given subject',required=True)
+group.add_argument(
+    '--metric_stem', help='stem of all t1t2 file names (eg. t1t2_stem =
+    ratio.nii.gz for subject1_ratio.nii.gz',required=True)
+group.add_argument(
+    '--label_stem', help='stem of all label file names',required=True)
+group.add_argument(
+    '--mask_label', help='label value identifying voxels of interest',required=True)
+group.add_argument(
+    '--demo_csv', help='demographic spreadsheet, must contain subject id',required=True)
+group.add_argument(
+    '--data_dir', help='directory containing subject data folders', required=True)
+ 
+group.add_argument('--tract_rec', help='path to TractREC library', required=True)
+
+args=parser.parse_args()
+
+
+
 #load TractREC 
-sys.path.append('/data/chamal/projects/raihaan/HCP/HCP900/scripts/TractREC/working/TractREC/TractREC/') #MODIFY
+sys.path.append(args.tract_rec) #MODIFY
 import TractREC as tr
 
-working_dir="/data/scratch/raihaan/hcp-micro/329subjectNMF_singleshell/warped/" #MODIFY
+working_dir=args.data_dir
+#working_dir="/data/scratch/raihaan/hcp-micro/329subjectNMF_singleshell/warped/" #MODIFY
 
 #you'll need a lookup table in .csv format with label number and structure. create one for your labels (left right striatum)
 #look at the .csv file below as an example, then modify the line below to point to your .csv lookup
-all_label_seg_file='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/2015_09_labels_CB_Hipp_Subcort_63.csv' #MODIFY
-all_label_seg=pd.read_csv(all_label_seg_file)
-all_label_seg=all_label_seg.set_index(['Index']) #make the index column the actual index
-all_lobule_subset_idx=[24] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
-all_label_seg.head()
-all_lobule_subset_idx
-df=pd.read_csv('/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/df_sorted_unrestricted_329.csv') #MODIFY to point to your copy of the demographics file
-df_sorted=df
+#all_label_seg_file='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/2015_09_labels_CB_Hipp_Subcort_63.csv' #MODIFY
+#all_label_seg_file=args.lookup
+all_label_seg=pd.read_csv(args.lookup)
+all_label_seg=all_label_seg.set_index(['Label_val']) #make the index column the actual index
+#all_lobule_subset_idx=[24] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
+all_lobule_subset_idx=[args.mask_value] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
+
+#df=pd.read_csv('/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/df_sorted_unrestricted_329.csv') #MODIFY to point to your copy of the demographics file
+#df_sorted=df
+df_sorted = pd.read_csv(args.demo_csv)
 
 #Create two lists, each containing the filenames of the t1t2 filtered files and majority voted labels
-t1divt2_files=[]
+metric_files=[]
 fused_label_files=[]
 for row in df_sorted['Subject']:
-    fname = working_dir  + str(row) + '/lefthc_correctedt1t2.nii.gz' #MODIFY
-    t1divt2_files.append(glob.glob(fname)[0])
-    fname = working_dir  + str(row) + '/majvote_hccorrected_label.nii.gz' #MODIFY
+    #fname = working_dir  + str(row) + '/lefthc_correctedt1t2.nii.gz' #MODIFY
+    fname = working_dir  + str(row) + '/*' + args.metric_stem
+    metric_files.append(glob.glob(fname)[0])
+    #fname = working_dir  + str(row) + '/majvote_hccorrected_label.nii.gz' #MODIFY
+    fname = working_dir  + str(row) + '/*' + args.label_stem 
     fused_label_files.append(glob.glob(fname)[0])
     
-t1divt2_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
+metric_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
 
 #use TractREC to extract the t1t2 data for each subject, only in voxels overlaying with the label
 df_seg,res=tr.extract_quantitative_metric(t1divt2_files,fused_label_files,IDs=t1divt2_IDs,ROI_mask_files=None,label_df=all_label_seg,\
