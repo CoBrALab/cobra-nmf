@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import scipy
 from scipy.io import savemat
-
+import argparse
 import sys
 
 parser=argparse.ArgumentParser(
@@ -13,20 +13,19 @@ parser=argparse.ArgumentParser(
     in .mat format''')
 
 parser.add_argument(
-    "metric",help="metric to extract", metavar='T1T2',required=True)
+    "--metric",help="metric to extract", metavar='T1T2',required=True)
 group = parser.add_argument_group(title="Execution options")
 
 group.add_argument(
-    '--lookup', metavar='.csv',help='csv file with two columns (Label_val, Label),
-    containing label number and name pairings',required=True)
-group.add_argument('--subjdir',help='directory containing t1t2 and label images for given subject',required=True)
+    '--lookup', metavar='.csv',help='''csv file with two columns (Label_val, Label)
+    containing label number and name pairings''',required=True)
 group.add_argument(
-    '--metric_stem', help='stem of all t1t2 file names (eg. t1t2_stem =
-    ratio.nii.gz for subject1_ratio.nii.gz',required=True)
+    '--metric_stem', help='''stem of all t1t2 file names (eg. t1t2_stem =
+    ratio.nii.gz for subject1_ratio.nii.gz''',required=True)
 group.add_argument(
     '--label_stem', help='stem of all label file names',required=True)
 group.add_argument(
-    '--mask_label', help='label value identifying voxels of interest',required=True)
+    '--mask_label', type=int, help='label value identifying voxels of interest',required=True)
 group.add_argument(
     '--demo_csv', help='demographic spreadsheet, must contain subject id',required=True)
 group.add_argument(
@@ -52,7 +51,7 @@ working_dir=args.data_dir
 all_label_seg=pd.read_csv(args.lookup)
 all_label_seg=all_label_seg.set_index(['Label_val']) #make the index column the actual index
 #all_lobule_subset_idx=[24] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
-all_lobule_subset_idx=[args.mask_value] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
+all_lobule_subset_idx=[args.mask_label] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
 
 #df=pd.read_csv('/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/df_sorted_unrestricted_329.csv') #MODIFY to point to your copy of the demographics file
 #df_sorted=df
@@ -69,27 +68,30 @@ for row in df_sorted['Subject']:
     fname = working_dir  + str(row) + '/*' + args.label_stem 
     fused_label_files.append(glob.glob(fname)[0])
     
-metric_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
+#metric_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
+metric_IDs=[]
+for name in metric_files:
+    metric_IDs.append(os.path.dirname(name))
 
 #use TractREC to extract the t1t2 data for each subject, only in voxels overlaying with the label
-df_seg,res=tr.extract_quantitative_metric(t1divt2_files,fused_label_files,IDs=t1divt2_IDs,ROI_mask_files=None,label_df=all_label_seg,\
+df_seg,res=tr.extract_quantitative_metric(metric_files,fused_label_files,IDs=metric_IDs,ROI_mask_files=None,label_df=all_label_seg,\
                                       label_subset_idx=all_lobule_subset_idx,thresh_mask_files=None,thresh_val=None,\
                                       max_val=None,thresh_type=None,erode_vox=None,metric='data',DEBUG_DIR=None,\
                                       VERBOSE=True,USE_LABEL_RES=False,volume_idx=0)
 #the res variable is now a list of the results for each subject
 
 #create a matrix that is, for now, just containing the first subjects data in the res list (index 0)
-t1t2_stack=res[0].data 
+metric_stack=res[0].data 
 
 #cycle through the remaining subjects in res (index 1 - end)
 #iteratively concatenate to t1t2_stack
 #before this loop, t1t2_stack has shape (1, voxels)
 #after 1 iteration, t1t2_stack has shape (2, voxels)....ends at (329, voxels)
-for img in range(1,len(t1divt2_IDs)):
-    t1t2_stack=np.concatenate((t1t2_stack,res[img].data),axis=0)    
+for img in range(1,len(metric_IDs)):
+    metric_stack=np.concatenate((metric_stack,res[img].data),axis=0)    
 
 #Save the matrix in .mat format. nmf wants voxels X subjects, so save the transpose of t1t2_stack
-t1t2_out = np.transpose(t1t2_stack)
-print(np.shape(t1t2_out))
-scipy.io.savemat('/path/to/save/wholebrain_t1t2.mat', mdict={'X': t1t2_out}) #MODIFY PATH 
+metric_out = np.transpose(metric_stack)
+print(np.shape(metric_out))
+scipy.io.savemat('raw_' + args.metric + '.mat', mdict={'X': metric_out}) #MODIFY PATH 
 
