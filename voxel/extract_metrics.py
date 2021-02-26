@@ -29,6 +29,8 @@ group.add_argument(
 group.add_argument(
     '--demo_csv', help='demographic spreadsheet, must contain subject id',required=True)
 group.add_argument(
+    '--id_col', help='name of subject Id column in demographic sheet',required=True)
+group.add_argument(
     '--data_dir', help='directory containing subject data folders', required=True)
  
 group.add_argument('--tract_rec', help='path to TractREC library', required=True)
@@ -51,7 +53,7 @@ df_sorted = pd.read_csv(args.demo_csv)
 #Create two lists, each containing the filenames of the t1t2 filtered files and majority voted labels
 metric_files=[]
 fused_label_files=[]
-for row in df_sorted['Subject']:
+for row in df_sorted[args.id_col]:
     fname = working_dir  + str(row) + '/*' + args.metric_stem
     metric_files.append(glob.glob(fname)[0])
     fname = working_dir  + str(row) + '/*' + args.label_stem 
