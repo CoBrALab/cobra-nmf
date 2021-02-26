@@ -36,39 +36,27 @@ group.add_argument('--tract_rec', help='path to TractREC library', required=True
 args=parser.parse_args()
 
 
-
 #load TractREC 
-sys.path.append(args.tract_rec) #MODIFY
+sys.path.append(args.tract_rec)
 import TractREC as tr
 
 working_dir=args.data_dir
-#working_dir="/data/scratch/raihaan/hcp-micro/329subjectNMF_singleshell/warped/" #MODIFY
 
-#you'll need a lookup table in .csv format with label number and structure. create one for your labels (left right striatum)
-#look at the .csv file below as an example, then modify the line below to point to your .csv lookup
-#all_label_seg_file='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/2015_09_labels_CB_Hipp_Subcort_63.csv' #MODIFY
-#all_label_seg_file=args.lookup
+#you'll need a lookup table in .csv format with label number and structure
 all_label_seg=pd.read_csv(args.lookup)
 all_label_seg=all_label_seg.set_index(['Label_val']) #make the index column the actual index
-#all_lobule_subset_idx=[24] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
-all_lobule_subset_idx=[args.mask_label] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
-
-#df=pd.read_csv('/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/df_sorted_unrestricted_329.csv') #MODIFY to point to your copy of the demographics file
-#df_sorted=df
+all_lobule_subset_idx=[args.mask_label] 
 df_sorted = pd.read_csv(args.demo_csv)
 
 #Create two lists, each containing the filenames of the t1t2 filtered files and majority voted labels
 metric_files=[]
 fused_label_files=[]
 for row in df_sorted['Subject']:
-    #fname = working_dir  + str(row) + '/lefthc_correctedt1t2.nii.gz' #MODIFY
     fname = working_dir  + str(row) + '/*' + args.metric_stem
     metric_files.append(glob.glob(fname)[0])
-    #fname = working_dir  + str(row) + '/majvote_hccorrected_label.nii.gz' #MODIFY
     fname = working_dir  + str(row) + '/*' + args.label_stem 
     fused_label_files.append(glob.glob(fname)[0])
     
-#metric_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
 metric_IDs=[]
 for name in metric_files:
     metric_IDs.append(os.path.dirname(name))
@@ -84,14 +72,12 @@ df_seg,res=tr.extract_quantitative_metric(metric_files,fused_label_files,IDs=met
 metric_stack=res[0].data 
 
 #cycle through the remaining subjects in res (index 1 - end)
-#iteratively concatenate to t1t2_stack
-#before this loop, t1t2_stack has shape (1, voxels)
-#after 1 iteration, t1t2_stack has shape (2, voxels)....ends at (329, voxels)
+#iteratively concatenate to metric_stack
 for img in range(1,len(metric_IDs)):
     metric_stack=np.concatenate((metric_stack,res[img].data),axis=0)    
 
-#Save the matrix in .mat format. nmf wants voxels X subjects, so save the transpose of t1t2_stack
+#Save the matrix in .mat format. nmf wants voxels X subjects, so save the transpose of metric_stack
 metric_out = np.transpose(metric_stack)
 print(np.shape(metric_out))
-scipy.io.savemat('raw_' + args.metric + '.mat', mdict={'X': metric_out}) #MODIFY PATH 
+scipy.io.savemat('raw_' + args.metric + '.mat', mdict={'X': metric_out}) 
 
