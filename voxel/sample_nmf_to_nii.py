@@ -13,12 +13,42 @@ import numpy as np
 import scipy
 import sys
 import hdf5storage
+import argparse
 
 options = hdf5storage.Options(oned_as = 'column', matlab_compatible = True, action_for_matlab_incompatible = 'error')
+parser=argparse.ArgumentParser(
+    description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
+    in .mat format''')
+
+parser.add_argument(
+    "--metric",help="metric to extract", metavar='T1T2',required=True)
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument(
+    '--lookup', metavar='.csv',help='''csv file with two columns (Label_val, Label)
+    containing label number and name pairings''',required=True)
+group.add_argument(
+    '--metric_stem', help='''stem of all t1t2 file names (eg. t1t2_stem =
+    ratio.nii.gz for subject1_ratio.nii.gz''',required=True)
+group.add_argument(
+    '--label_stem', help='stem of all label file names',required=True)
+group.add_argument(
+    '--mask_label', type=int, help='label value identifying voxels of interest',required=True)
+group.add_argument(
+    '--demo_csv', help='demographic spreadsheet, must contain subject id',required=True)
+group.add_argument(
+    '--id_col', help='name of subject Id column in demographic sheet',required=True)
+group.add_argument(
+    '--data_dir', help='directory containing subject data folders', required=True)
+
+group.add_argument('--tract_rec', help='path to TractREC library', required=True)
+group.add_argument('--nmf_components', help='.mat output results from nmf', required=True)
+
+args=parser.parse_args()
 
 #load TractREC 
-sys.path.append('/data/chamal/projects/raihaan/HCP/HCP900/scripts/TractREC/working/TractREC/TractREC/') #MODIFY to point to your TractREC copy
-import TractREC as tr
+#sys.path.append('/data/chamal/projects/raihaan/HCP/HCP900/scripts/TractREC/working/TractREC/TractREC/') #MODIFY to point to your TractREC copy
+#import TractREC as tr
 
 #this function takes in component scores and writes out a nifti label file, using the coordinates extracted via tract rec
 # voxscores - n_voxels X n_components matrix/array.  function will write out one label for each column
@@ -45,32 +75,61 @@ def voxelscores_to_label(voxscores, base, lb_ref, hemi,refimg_res):
 #the main point of this is to get the majority voted label and coordinates loaded in
 #the chunk of code below (until the ###) will look similar to sample_get_t1t2_wholebrain.py
 
-working_dir="/data/scratch/raihaan/hcp-micro/329subjectNMF_singleshell/warped/" #MODIFY
+#working_dir="/data/scratch/raihaan/hcp-micro/329subjectNMF_singleshell/warped/" #MODIFY
 
 #you'll need a lookup table in .csv format with label number and structure. create one for your labels (left right striatum)
 #look at the .csv file below as an example, then modify the line below to point to your .csv lookup
-all_label_seg_file='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/2015_09_labels_CB_Hipp_Subcort_63.csv' #MODIFY
-all_label_seg=pd.read_csv(all_label_seg_file)
-all_label_seg=all_label_seg.set_index(['Index']) #make the index column the actual index
-all_lobule_subset_idx=[24] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
-all_label_seg.head()
-all_lobule_subset_idx
-df=pd.read_csv('/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/df_sorted_unrestricted_329.csv') #MODIFY to point to your copy of the demographics file
-df_sorted=df
+#all_label_seg_file='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/2015_09_labels_CB_Hipp_Subcort_63.csv' #MODIFY
+#all_label_seg=pd.read_csv(all_label_seg_file)
+#all_label_seg=all_label_seg.set_index(['Index']) #make the index column the actual index
+#all_lobule_subset_idx=[24] #MODIFY - this should be the label value of the structure of interest eg if this is extracting left striatum, make this the left striatum label val
+#all_label_seg.head()
+#all_lobule_subset_idx
+#df=pd.read_csv('/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/raw_data/sheets/df_sorted_unrestricted_329.csv') #MODIFY to point to your copy of the demographics file
+#df_sorted=df
 
 #Create two lists, each containing the filenames of the t1t2 filtered files and majority voted labels
-t1divt2_files=[]
+#t1divt2_files=[]
+#fused_label_files=[]
+#for row in df_sorted['Subject']:
+#    fname = working_dir  + str(row) + '/lefthc_correctedt1t2.nii.gz' #MODIFY
+#    t1divt2_files.append(glob.glob(fname)[0])
+#    fname = working_dir  + str(row) + '/majvote_hccorrected_label.nii.gz' #MODIFY
+#    fused_label_files.append(glob.glob(fname)[0])
+    
+#t1divt2_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
+
+
+
+#load TractREC 
+sys.path.append(args.tract_rec)
+import TractREC as tr
+
+working_dir=args.data_dir
+
+#you'll need a lookup table in .csv format with label number and structure
+all_label_seg=pd.read_csv(args.lookup)
+all_label_seg=all_label_seg.set_index(['Label_val']) #make the index column the actual index
+all_lobule_subset_idx=[args.mask_label] 
+df_sorted = pd.read_csv(args.demo_csv)
+
+#Create two lists, each containing the filenames of the t1t2 filtered files and majority voted labels
+metric_files=[]
 fused_label_files=[]
-for row in df_sorted['Subject']:
-    fname = working_dir  + str(row) + '/lefthc_correctedt1t2.nii.gz' #MODIFY
-    t1divt2_files.append(glob.glob(fname)[0])
-    fname = working_dir  + str(row) + '/majvote_hccorrected_label.nii.gz' #MODIFY
+for row in df_sorted[args.id_col]:
+    fname = working_dir  + str(row) + '/*' + args.metric_stem
+    metric_files.append(glob.glob(fname)[0])
+    fname = working_dir  + str(row) + '/*' + args.label_stem 
     fused_label_files.append(glob.glob(fname)[0])
     
-t1divt2_IDs=[os.path.dirname(name.split("t1t2")[0]) for name in t1divt2_files]
+metric_IDs=[]
+for name in metric_files:
+    metric_IDs.append(os.path.dirname(name))
+
+
 
 #use TractREC to extract the t1t2 data for each subject, only in voxels overlaying with the label
-df_seg,res=tr.extract_quantitative_metric(t1divt2_files,fused_label_files,IDs=t1divt2_IDs[0],ROI_mask_files=None,label_df=all_label_seg,\
+df_seg,res=tr.extract_quantitative_metric(metric_files,fused_label_files,IDs=metric_IDs,ROI_mask_files=None,label_df=all_label_seg,\
                                       label_subset_idx=all_lobule_subset_idx,thresh_mask_files=None,thresh_val=None,\
                                       max_val=None,thresh_type=None,erode_vox=None,metric='data',DEBUG_DIR=None,\
                                       VERBOSE=True,USE_LABEL_RES=False,volume_idx=0)
@@ -85,25 +144,33 @@ df_seg,res=tr.extract_quantitative_metric(t1divt2_files,fused_label_files,IDs=t1
 
 #load in some .mat results from opnmf
 #the 7 lines below are for pointing to the nmf results .mat file, and making an output directory for the .nii files you will create. modify as necessary to point to your .mat opnmf results
-compnum=4
-hemi='left' #MODIFY based on what you want the output files to be named
-res_dir = '/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/analysis/329subject_singleshellNMF/topython/' + \
-str(compnum) + 'components/'
-if not os.path.exists(res_dir):
-    os.makedirs(res_dir)
-fname='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/analysis/329subject_singleshellNMF/pnmf_out/' + \
-hemi + '_' + str(compnum) + 'comps.mat'
+#compnum=4
+#hemi='left' #MODIFY based on what you want the output files to be named
+#res_dir = '/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/analysis/329subject_singleshellNMF/topython/' + \
+#str(compnum) + 'components/'
+#if not os.path.exists(res_dir):
+#    os.makedirs(res_dir)
+#fname='/data/chamal/projects/raihaan/projects/inprogress/hc-nmf-micro/analysis/329subject_singleshellNMF/pnmf_out/' + \
+#hemi + '_' + str(compnum) + 'comps.mat'
 
 #load in the results. in particular we want W here, which is voxels X components
-w = hdf5storage.loadmat(fname)['W']
-h = hdf5storage.loadmat(fname)['H']
+w = hdf5storage.loadmat(args.nmf_components)['W']
+h = hdf5storage.loadmat(args.nmf_components)['H']
 
-lb_ref = "/data/chamal/projects/raihaan/HCP/HCP900/group-avg/900-t1-t2/300-unrl/warped_updatedhc/majvote_hccorrected_label.nii.gz" #modify, point to a majority vote striatum label
+num_components = np.shape(w)[1]
+res_dir = str(num_components) + 'component_maps/'
+if not os.path.exists(res_dir):
+    os.makedirs(res_dir)
+
+#lb_ref = "/data/chamal/projects/raihaan/HCP/HCP900/group-avg/900-t1-t2/300-unrl/warped_updatedhc/majvote_hccorrected_label.nii.gz" #modify, point to a majority vote striatum label
+
+lb_ref = fused_label_files[0] #assumes all labels the same
 
 #the fcn call on the next line should create/write one nifti file for each component
 voxelscores_to_label(w,res_dir,lb_ref,hemi,res) #modify res_dir, hemi variables for appropriate paths if necessary
 
 #instead of one file per component, the code below uses a winner take all strategy to create cluster labels, and writes out the file
+
 #eg for voxel 1, say component 2 score is highest -> voxel 1 is now in cluster 2. repeat for all voxels
 #w_label_out ends up having dimensions n_voxels X 1 - as opposed to n_voxels X component
 #values in w_label_out corrspond to cluster labels, output clustering is essentially combining each of the previously created component label files into one
