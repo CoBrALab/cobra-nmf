@@ -19,8 +19,6 @@ parser=argparse.ArgumentParser(
     description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
     in .mat format''')
 
-parser.add_argument(
-    "--metric",help="metric to extract", metavar='T1T2',required=True)
 group = parser.add_argument_group(title="Execution options")
 
 group.add_argument(
@@ -52,11 +50,14 @@ args=parser.parse_args()
 # lb_ref - the majority voted label, used as a reference image for the output label. the fcn makes an image 'like' lb_ref, but replaces values with component scores/cluster lbels
 # hemi - a string included in the output filename of the label. useful if you need to specify left/right, less useful otherwise
 #refimg_res - a res object from Tractrect. will contain voxel coordinate info in the vox_coord variable. required
-def voxelscores_to_label(voxscores, base, lb_ref, hemi,refimg_res):
+def voxelscores_to_label(voxscores, base, lb_ref, refimg_res, cluster=False):
     voxcoords=refimg_res[0].vox_coord
     compnum  = np.shape(voxscores)[1]
     for c in range(0,compnum):
-        outpath = base + hemi + 'hc-' + str(c) + '.nii.gz'
+        if cluster:
+            outpath = base + 'cluster.nii.gz'
+        else:
+            outpath = base + '-' + str(c) + '.nii.gz'
         print(outpath)
         b=np.transpose(voxscores[:,c])
         print(np.shape(b))
@@ -95,7 +96,7 @@ for name in metric_files:
 
 
 #use TractREC to extract the t1t2 data for each subject, only in voxels overlaying with the label
-df_seg,res=tr.extract_quantitative_metric(metric_files,fused_label_files,IDs=metric_IDs,ROI_mask_files=None,label_df=all_label_seg,\
+df_seg,res=tr.extract_quantitative_metric(metric_files,fused_label_files,IDs=metric_IDs[0],ROI_mask_files=None,label_df=all_label_seg,\
                                       label_subset_idx=all_lobule_subset_idx,thresh_mask_files=None,thresh_val=None,\
                                       max_val=None,thresh_type=None,erode_vox=None,metric='data',DEBUG_DIR=None,\
                                       VERBOSE=True,USE_LABEL_RES=False,volume_idx=0)
@@ -114,7 +115,7 @@ if not os.path.exists(res_dir):
 lb_ref = fused_label_files[0] #assumes all labels the same
 
 #the fcn call on the next line should create/write one nifti file for each component
-voxelscores_to_label(w,res_dir,lb_ref,hemi,res) 
+voxelscores_to_label(w,res_dir,lb_ref,res) 
 
 #instead of one file per component, the code below uses a winner take all strategy to create cluster labels, and writes out the file
 
@@ -126,6 +127,6 @@ print(np.shape(w_label))
 print(np.max(w_label))
 w_label_out = w_label + 1
 
-voxelscores_to_label(w_label_out,res_dir,lb_ref,hemi + '-cluster' + str(compnum),res) 
+voxelscores_to_label(w_label_out,res_dir,lb_ref,res,cluster=True) 
 
 
