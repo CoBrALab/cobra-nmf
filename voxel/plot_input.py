@@ -87,7 +87,9 @@ if args.minimum is None:
     args.minimum = np.min(x)
 
 if args.maximum is None:
-    args.maximum = np.max(x)
+    args.maximum = np.percentile(x,99.5)
 
+cbar_spacing=np.floor((args.maximum - args.minimum)/2) #defualt to show cbar ticks at min, max, halfway
 
-heatmapping(x,args.minimum,args.maximum,0.5,args.width,args.height,title="Input",fname=args.output)    
+heatmapping(x,args.minimum,args.maximum+0.00001,cbar_spacing,args.width,args.height,title="Input",fname=args.output)    
+#+0.00001 is for edge case where max = exact integer
