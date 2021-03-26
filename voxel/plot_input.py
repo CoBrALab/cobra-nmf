@@ -14,13 +14,31 @@ import matplotlib as mpl
 from matplotlib import cm
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, FixedFormatter, FixedLocator
 from matplotlib import pyplot as plt
+import argparse
 
 options = hdf5storage.Options(oned_as = 'column', matlab_compatible = True, action_for_matlab_incompatible = 'error')
 
-fname=sys.argv[1]
-x=hdf5storage.loadmat(fname)['X']
-print(np.shape(x))
-print(np.min(x), np.mean(x), np.max(x))
+parser=argparse.ArgumentParser(
+    description='''This script outputs a .png file containing a heatmap of input nmf matrix data''')
+
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument(
+    '--input', help='.mat file containing voxel x subjects data',required=True)
+group.add_argument(
+    '--output', help='output .png filename',required=True)
+group.add_argument(
+    '--minimum', type=float, help='min value',required=False)
+group.add_argument(
+    '--maximum', type=float, help='max value',required=False)
+group.add_argument(
+    '--width', type=float, help='figure width',required=False,default=16)
+group.add_argument(
+    '--height', type=float, help='figure height',required=False,default=8)
+
+args=parser.parse_args()
+x=hdf5storage.loadmat(args.input)['X']
+
 
 #heat mapping for input matrix
 def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
@@ -65,5 +83,11 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
         plt.title(title, fontsize=30)
     plt.savefig(fname, bbox_inches='tight')
     
+if args.minimum is None:
+    args.minimum = np.min(x)
 
-heatmapping(x,np.min(x),np.max(x),0.5,16,8,title="Input",fname=sys.argv[2])    
+if args.maximum is None:
+    args.maximum = np.max(x)
+
+
+heatmapping(x,args.minimum,args.maximum,0.5,args.width,args.height,title="Input",fname=args.output)    
