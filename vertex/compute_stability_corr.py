@@ -6,6 +6,7 @@ import scipy
 import scipy.io
 from scipy.io import savemat, loadmat
 from sklearn.metrics.pairwise import cosine_similarity
+import errno
 n_splits = 10
 g = sys.argv[1]
 
@@ -13,7 +14,13 @@ out_dir = "stability_correlations/" #name of output directory. MODIFY if you lik
 stab_dir = "stability_res/" #MODIFY path to location where .mat outputs from nmf for stability analysis are
 
 if not os.path.exists(out_dir): #make output directory
-    os.makedirs(out_dir)
+    try:
+        os.makedirs(out_dir)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST:
+            pass
+        else:
+            raise
 
 cols = ["Granularity","Iteration","Corr_mean","Corr_median","Corr_std","Recon_errorA","Recon_errorB"]
 df = pd.DataFrame(columns = cols)
