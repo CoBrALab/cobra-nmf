@@ -14,12 +14,31 @@ import matplotlib as mpl
 from matplotlib import cm
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, FixedFormatter, FixedLocator
 from matplotlib import pyplot as plt
-
+import argparse
 options = hdf5storage.Options(oned_as = 'column', matlab_compatible = True, action_for_matlab_incompatible = 'error')
 
-fname=sys.argv[1]
-h=hdf5storage.loadmat(fname)['H']
-print(np.shape(h))
+
+parser=argparse.ArgumentParser(
+    description='''This script outputs a .png file containing a heatmap of input nmf matrix data''')
+
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument(
+    '--nmf_weights', help='.mat file containing nmf results',required=True)
+group.add_argument(
+    '--output', help='output .png filename',required=True)
+group.add_argument(
+    '--minimum', type=float, help='min value',required=False,default=-2)
+group.add_argument(
+    '--maximum', type=float, help='max value',required=False,default=2)
+group.add_argument(
+    '--width', type=float, help='figure width',required=False,default=16)
+group.add_argument(
+    '--height', type=float, help='figure height',required=False,default=8)
+
+args=parser.parse_args()
+
+h=hdf5storage.loadmat(args.nmf_weights)['H']
 
 #heat mapping for H matrix
 def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
@@ -66,4 +85,4 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
     
 
 h_z=scipy.stats.zscore(h,axis=1)
-heatmapping(h_z,-2,2,1,16,8,title="Hweights",fname=sys.argv[2])    
+heatmapping(h_z,args.minimum,args.maximum+0.0001,2,args.width,args.height,title="Hweights",fname=args.output)    
