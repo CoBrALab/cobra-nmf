@@ -55,9 +55,9 @@ def voxelscores_to_label(voxscores, base, lb_ref, refimg_res, cluster=False):
     compnum  = np.shape(voxscores)[1]
     for c in range(0,compnum):
         if cluster:
-            outpath = base + 'cluster.nii.gz'
+            outpath = base + '/cluster.nii.gz'
         else:
-            outpath = base + '-' + str(c) + '.nii.gz'
+            outpath = base + '/component-' + str(c) + '.nii.gz'
         print(outpath)
         b=np.transpose(voxscores[:,c])
         print(np.shape(b))
