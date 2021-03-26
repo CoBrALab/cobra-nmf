@@ -58,23 +58,13 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
     ax.set_aspect('auto') #use 'auto' for automatic aspect
     ax.tick_params(axis='both',which='both',bottom='off',top='off',labelbottom='on',left='on',labelleft='on', pad = 5)
     ax.set_xlabel('')
-    #xmajorLocator = FixedLocator([210, 630, 1050,1470,1890])
-    #xmajorFormatter = FixedFormatter(['CT','SA','MD','FA','RD'])
-    #ax.xaxis.set_major_locator(xmajorLocator)
-    #ax.xaxis.set_major_formatter(xmajorFormatter)
-    #plt.setp(ax.get_xmajorticklabels(), rotation='horizontal', fontsize=40)
-    ax.set_ylabel('Vertices', fontsize=40)
+    ax.set_ylabel('Voxels', fontsize=40)
     ax.yaxis.set_ticklabels([])
     ax.yaxis.labelpad = 5
     ax.tick_params(axis='y',size=15)
     ax.grid(False)
     fig = plt.gcf()
     fig.set_size_inches(fig_width,fig_height)
-    n_metrics = 5
-    #n_subj = np.shape(data)[1]/5
-    #for x in range(1,n_metrics):
-    #    plt.axvline(x=(n_subj*x),c='w',linewidth=2)
-    #Generate a color bar
     cbar = plt.colorbar(img,cmap=cmap)
     
     cbar.set_ticks(np.arange(minn, maxx, cbar_tix))
