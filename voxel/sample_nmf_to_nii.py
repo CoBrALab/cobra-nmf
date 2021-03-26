@@ -42,6 +42,7 @@ group.add_argument(
 
 group.add_argument('--tract_rec', help='path to TractREC library', required=True)
 group.add_argument('--nmf_components', help='.mat output results from nmf', required=True)
+group.add_argument('--out_dir', help='output directory', required=True)
 
 args=parser.parse_args()
 
@@ -106,7 +107,7 @@ w = hdf5storage.loadmat(args.nmf_components)['W']
 h = hdf5storage.loadmat(args.nmf_components)['H']
 
 num_components = np.shape(w)[1]
-res_dir = str(num_components) + 'component_maps/'
+res_dir = args.out_dir
 if not os.path.exists(res_dir):
     os.makedirs(res_dir)
 
