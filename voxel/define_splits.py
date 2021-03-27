@@ -43,32 +43,17 @@ options = hdf5storage.Options(oned_as = 'column', matlab_compatible = True, acti
 
 #read in demographic spreadsheet with subject ids, age, prisma etc
 df_sorted = pd.read_csv(args.demo_csv)
-#df_sorted = pd.read_csv('../../../../raw_data/sheets/07-04-20-McGillData_WH_Exprodo-Report_IncExc_CR_CRmed_cham_CRtopfdemeduc_civetpass_slopes_sorted.csv') #MODIFY
 
 ## create demo matrix containing subj id and the variables to stratify by (age)
-#variables to stratify by - probably age and sex, maybe disease group as well
-age_var='OX.AGE'; sex_var= 'OX.SEX' #MODIFY
-#group_var = ?? #MODIFY if applicable, add others if applicable
 
 demo_vars = []
 demo_vars.append(args.id_col)
 for x in args.stratifyby:
     demo_vars.append(x)
-print(demo_vars)
-#demo = df_sorted[['oxmg_id',age_var,sex_var]].values #MODIFY to be subjectID and the variables you want to stratify by (probably age_var, sex_var, plus others defined above)
 demo = df_sorted[demo_vars].values 
-
-#sklearn stratify tool needs categorical vars - bin age by median val
-#demo = np.hstack((demo, np.zeros((len(df_sorted),1)))) #new col for age
-#median_age = np.median(df_sorted[age_var].values) 
-#<= median age -> you are young 
-#demo[np.where(df_sorted[age_var].values > median_age),3]="old"
-#demo[np.where(df_sorted[age_var].values <= median_age),3]="young"
 
 #define train data as subj ids (x)
 #define categorical vars as vars to stratify by (y, ie labels)
-#X = demo[:,0:1]
-#y = demo[:,2:] #this skips [:,1] which is numerical age, instead includes categorical age
 X = demo[:,0:1]
 y = demo[:,1:] 
 
@@ -88,20 +73,16 @@ for train_index, test_index in sss.split(X, y):
     
     ID_list = []
     s = train_index[0]
-    #ID_list.append(df_sorted['oxmg_id'].iloc[s]) #MODIFY oxmg_id to subject id name
-    ID_list.append(df_sorted[args.id_col].iloc[s]) #MODIFY oxmg_id to subject id name
+    ID_list.append(df_sorted[args.id_col].iloc[s]) 
     for s in train_index[1:]:
-        #ID_list.append(df_sorted['oxmg_id'].iloc[s]) #MODIFY oxmg_id to subject id name
-        ID_list.append(df_sorted[args.id_col].iloc[s]) #MODIFY oxmg_id to subject id name
+        ID_list.append(df_sorted[args.id_col].iloc[s]) 
     Asplits_subjectIDs[iter] = ID_list
     
     ID_list = []
     s = test_index[0]
-    #ID_list.append(df_sorted['oxmg_id'].iloc[s]) #MODIFY oxmg_id to subject id name
-    ID_list.append(df_sorted[args.id_col].iloc[s]) #MODIFY oxmg_id to subject id name
+    ID_list.append(df_sorted[args.id_col].iloc[s]) 
     for s in test_index[1:]:
-        #ID_list.append(df_sorted['oxmg_id'].iloc[s]) #MODIFY oxmg_id to subject id name
-        ID_list.append(df_sorted[args.id_col].iloc[s]) #MODIFY oxmg_id to subject id name
+        ID_list.append(df_sorted[args.id_col].iloc[s]) 
     Bsplits_subjectIDs[iter] = ID_list
     
     iter = iter + 1
@@ -111,23 +92,16 @@ out_dir = "stability_splits/"
 if not os.path.exists(out_dir):
     os.makedirs(out_dir)
 
-pickle.dump(Asplits_indices, open( out_dir + "Asplits_indices.p", "wb")) #clean this up
-pickle.dump(Asplits_subjectIDs, open( out_dir + "Asplits_subjectIDs.p", "wb" ))
-pickle.dump(Bsplits_indices, open( out_dir + "Bsplits_indices.p", "wb" ))
-pickle.dump(Bsplits_subjectIDs, open( out_dir + "Bsplits_subjectIDs.p", "wb" ))
+#pickle.dump(Asplits_subjectIDs, open( out_dir + "Asplits_subjectIDs.p", "wb" ))
+#pickle.dump(Bsplits_subjectIDs, open( out_dir + "Bsplits_subjectIDs.p", "wb" ))
 #save in .mat format as well for more flexible compatibility with niagara env
 hdf5storage.savemat("Asplits_indices.mat", Asplits_indices, format='7.3', options=options)
 hdf5storage.savemat("Bsplits_indices.mat", Bsplits_indices, format='7.3', options=options)
 
-
-#input_list=["wholebrain_t1t2","wholebrain_dbm"] #MODIFY to match the filenames of the wholebrain files created in your sample_extract*py scripts. should be name of the file without the .mat extension
-input_list=args.inputs #MODIFY to match the filenames of the wholebrain files created in your sample_extract*py scripts. should be name of the file without the .mat extension
+input_list=args.inputs
 
 data_dict={}
-#raw_data_dir = '/folder/where/wholebrain/rawdata/stored/' #MODIFY to location of wholebrain .mat files containig raw data
 for f in input_list:
-    #fname = raw_data_dir + '/' + file + ".mat"
-    #data_dict[file] = hdf5storage.loadmat(fname)['X'] #load raw data
     data_dict[f] = hdf5storage.loadmat(f)['X'] #load raw data
 data_dict.keys()
 #for each split, build required indices

@@ -36,10 +36,6 @@ args=parser.parse_args()
 #Read in csv with subject demographics 
 df_sorted = pd.read_csv(args.demo_csv)
 
-#metrics=["T1T2", "DBM"] #MODIFY to be a list of the metrics used
-                           #the exact text used is up to you, but there should be one string for every metric
-                           #the order matters - if the first chunk of data is ct, then put the ct string first
-
 #this function appends NMF weights to a demographics df
 #order of new cols is Comp1_ct....compN_t1t2,comp1_dbm..compn_dbm
 def append_subjweights_plsstyle(df_demo,nmf_weights, metrics):
@@ -50,7 +46,7 @@ def append_subjweights_plsstyle(df_demo,nmf_weights, metrics):
     for comp in range(0,maxrow):
         
         for m in range(0,len(metrics)):
-            col='Comp'+str(comp+1)+metrics[m]
+            col='Comp'+str(comp+1)+'_'+metrics[m]
             df_demo_nmf[col] = nmf_weights[comp,n_subjects*m:n_subjects*(m+1)]
       
     print( "df had", len(df_demo.columns), "columns")
