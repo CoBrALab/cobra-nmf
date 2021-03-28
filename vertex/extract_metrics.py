@@ -19,10 +19,6 @@ parser=argparse.ArgumentParser(
     description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
     in .mat format''')
 
-parser=argparse.ArgumentParser(
-    description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
-    in .mat format''')
-
 parser.add_argument('--metric',type=str, nargs='+', action='append')
 parser.add_argument('--metric_column',type=str, nargs='+', action='append')
 group = parser.add_argument_group(title="Execution options")
