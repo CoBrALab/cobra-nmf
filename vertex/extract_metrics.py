@@ -1,5 +1,5 @@
-#this script loads in raw ct .txt files from each subject and:
-#1) concatenates each file to build a vertex X subj matrix of raw ct, for both left and right hemisphers
+#this script loads in raw .txt files from each subject and:
+#1) concatenates each file to build a vertex X subj matrix for each metric, for both left and right hemisphers
 #2) concatenates the left and right hemisphere data to build matrix of vertex X subj for whole brain 
 #3) write out .mat files containing left, right, whole brain data
 
