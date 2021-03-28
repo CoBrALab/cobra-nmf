@@ -14,30 +14,36 @@ import pickle
 import scipy
 from scipy.io import savemat, loadmat
 from scipy import stats
+import argparse
 
-input_list=["wholebrain_ct_raw","wholebrain_sa_raw","wholebrain_curv_raw"] #MODIFY to match the filenames of the wholebrain files created in your sample_extract*py scripts. should be name of the file without the .mat extension
+parser=argparse.ArgumentParser(
+    description='''This script concatenates vertex x subject matrices into one vertex x subject*num_metrics matrix.
+    Each metric matrix is z scored prior to concatenation and final matrix is shifted by min value to obtain non-negativity ''')
 
-z_dict = {}
+parser.add_argument(
+    "--inputs",help="metric matrices to concatenate", metavar='list', nargs='+', required=True)
 
-for metric in input_list:
-    fname = metric + ".mat"
-    res = loadmat(fname) #load raw data
-    x_z = np.asarray(stats.zscore(res['X'],axis=None)) #zscore, across both subjects and vertices
-    z_dict[metric] = x_z
+parser.add_argument(
+    "--output", help='output .mat filename', default='output.mat')
+
+args=parser.parse_args()
+
+def save_mat(x,key,fname):
+    print("Saving ", np.shape(x), key, "to", fname)
+    scipy.io.savemat(fname, {'X': x})
+
+#initiate matrix with first input
+res = loadmat(args.inputs[0])
+z_all = stats.zscore(res['X'],axis=None)
+
+num_metrics = len(args.inputs)
+
+for m in range(1,num_metrics):
+    res = loadmat(args.inputs[m]) #load raw data
+    #x_z = np.asarray(stats.zscore(res['X'],axis=None)) #zscore, across both subjects and vertices
+    z_all = np.concatenate((z_all, stats.zscore(res['X'],axis=None)), axis = 1)
 
 
-#concatenate each zscored shifted matrix together
-#forms vertex X subject*n_metrics matrix
-metric=input_list[0]
-wb_z_all = z_dict[metric]
-#if only one metric, skip the for loop below, go straight to line 38 #
-for metric in input_list[1:]:
-    print(metric)
-    wb_z_all = np.concatenate((wb_z_all, z_dict[metric]),axis=1)
+z_shift_all = z_all - np.min(z_all)
 
-wb_z_s_all = wb_z_all - np.min(wb_z_all)
-
-#write out z scored, shifted data fow whole group nmf analysis
-fname = sys.argv[1]
-print(fname, np.shape(wb_z_s_all), np.min(wb_z_s_all))
-savemat(fname, {'X': wb_z_s_all})
+save_mat(z_shift_all, 'concatenated, shifted data', args.output)
