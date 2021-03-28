@@ -8,10 +8,29 @@ from matplotlib import cm
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, FixedFormatter, FixedLocator
 from matplotlib import pyplot as plt
 plt.switch_backend('Agg')
+import argparse
+
+parser=argparse.ArgumentParser(
+    description='''This script takes in computed stability metrics and plots
+    number of components on the x axis, stability coefficient and graident of recon error on y''')
+
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument('--spacing', help='interval between computed ks', type=int, default=1)
+
+group.add_argument(
+    "--stability_correlations",help="csv containing computed stability metrics", required=True)
+
+group.add_argument(
+    "--output",help="output .png file to store plot", required=True)
+
+
+args=parser.parse_args()
 
 #plot stability and error gradient on same plot 
 
-df_stab = pd.read_csv(sys.argv[1])
+#df_stab = pd.read_csv(sys.argv[1])
+df_stab = args.stability_correlations
 
 #fix formatting of recon error values - remove [[ and ]] from start/end
 reconA_corrected=[] #list of corrected reconA vals
@@ -29,7 +48,8 @@ df_stab['Recon_errorB_corrected'] = reconB_corrected
 
 max_gran = np.max(df_stab['Granularity'].values)
 min_gran = np.min(df_stab['Granularity'].values)
-interval=2 #MODIFY - this should represent the spacing of granularities investigated. ie if 2,4,5,8... interval = 2
+#interval=2 #MODIFY - this should represent the spacing of granularities investigated. ie if 2,4,5,8... interval = 2
+interval = args.spacing
 
 split_corr = []
 for g in np.arange(min_gran,max_gran+1,interval):
@@ -76,5 +96,4 @@ ax2.errorbar(grad_err_x,error_grad_arr.flatten(),yerr=error_grad_std_arr.flatten
 ax2.tick_params(axis='y', labelcolor=color, labelsize=20)
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.title('NMF Stability', fontsize=30)
-plt.savefig(sys.argv[2], dpi='figure', bbox_inches='tight')
-#plt.show()
+plt.savefig(args.output, dpi='figure', bbox_inches='tight')
