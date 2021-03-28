@@ -16,8 +16,7 @@ import argparse
 
 options = hdf5storage.Options(oned_as = 'column', matlab_compatible = True, action_for_matlab_incompatible = 'error')
 parser=argparse.ArgumentParser(
-    description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
-    in .mat format''')
+    description='''This script converts nmf component results to nifti files for visualization''')
 
 group = parser.add_argument_group(title="Execution options")
 

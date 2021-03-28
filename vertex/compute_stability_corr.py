@@ -10,8 +10,8 @@ import errno
 import argparse
 
 parser=argparse.ArgumentParser(
-    description='''This script creates stratified input matrices for stability analysis,
-    stores outputs as .mat files in stability_splits directory''')
+    description='''This script computed stability metrics (spatial similarity,
+    recon error) for a specified number of components and stores results in a .csv file''')
 
 group = parser.add_argument_group(title="Execution options")
 

@@ -16,7 +16,7 @@ from scipy.io import savemat, loadmat
 import argparse
 
 parser=argparse.ArgumentParser(
-    description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
+    description='''This script extracts vertex data from .txt files and outputs a vertex x subject matrix
     in .mat format''')
 
 parser.add_argument('--metric',type=str, nargs='+', action='append')
