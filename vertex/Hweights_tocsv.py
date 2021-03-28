@@ -59,7 +59,6 @@ def append_subjweights_plsstyle(df_demo,nmf_weights, metrics):
         return
  
 #load in the nmf results of interest, check shape
-#nmf_res_filename = "sample_nmf_res.mat" #MODIFY point to your nmf results
 H = loadmat(args.nmf_results)['H']
 print(np.shape(H)) #check shape
 

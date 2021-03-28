@@ -48,7 +48,6 @@ df_stab['Recon_errorB_corrected'] = reconB_corrected
 
 max_gran = np.max(df_stab['Granularity'].values)
 min_gran = np.min(df_stab['Granularity'].values)
-#interval=2 #MODIFY - this should represent the spacing of granularities investigated. ie if 2,4,5,8... interval = 2
 interval = args.spacing
 
 split_corr = []
