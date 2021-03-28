@@ -9,11 +9,10 @@ import numpy as np
 
 import sys
 import pickle
-import hdf5storage
 import scipy
 import scipy.stats
 import argparse
-
+from scipy.io import savemat, loadmat
 #Read in csv with subject demographics 
 
 parser=argparse.ArgumentParser(
@@ -61,7 +60,7 @@ def append_subjweights_plsstyle(df_demo,nmf_weights, metrics):
  
 #load in the nmf results of interest, check shape
 #nmf_res_filename = "sample_nmf_res.mat" #MODIFY point to your nmf results
-H = hdf5storage.loadmat(args.nmf_results)['H']
+H = loadmat(args.nmf_results)['H']
 print(np.shape(H)) #check shape
 
 #use append_subjweights_plsstyle to concat the demographic df with the nmf weights

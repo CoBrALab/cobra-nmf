@@ -6,17 +6,16 @@ import numpy as np
 
 import sys
 import pickle
-import hdf5storage
 import scipy
+from scipy.io import savemat, loadmat
 from scipy import stats
 
 import matplotlib as mpl
 from matplotlib import cm
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, FixedFormatter, FixedLocator
 from matplotlib import pyplot as plt
-import argparse
 
-options = hdf5storage.Options(oned_as = 'column', matlab_compatible = True, action_for_matlab_incompatible = 'error')
+import argparse
 
 parser=argparse.ArgumentParser(
     description='''This script outputs a .png file containing a heatmap of input nmf matrix data''')
@@ -37,7 +36,7 @@ group.add_argument(
     '--height', type=float, help='figure height',required=False,default=8)
 
 args=parser.parse_args()
-x=hdf5storage.loadmat(args.input)['X']
+x=loadmat(args.input)['X']
 
 
 #heat mapping for input matrix
@@ -58,7 +57,7 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
     ax.set_aspect('auto') #use 'auto' for automatic aspect
     ax.tick_params(axis='both',which='both',bottom='off',top='off',labelbottom='on',left='on',labelleft='on', pad = 5)
     ax.set_xlabel('')
-    ax.set_ylabel('Voxels', fontsize=40)
+    ax.set_ylabel('Vertices', fontsize=40)
     ax.yaxis.set_ticklabels([])
     ax.yaxis.labelpad = 5
     ax.tick_params(axis='y',size=15)
