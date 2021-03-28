@@ -29,8 +29,8 @@ args=parser.parse_args()
 n_splits = args.n_folds
 g = args.k
 
-out_dir = "stability_correlations/" #name of output directory. MODIFY if you like
-stab_dir = "stability_res/" #MODIFY path to location where .mat outputs from nmf for stability analysis are
+out_dir = "stability_correlations/" 
+stab_dir = args.stability_results_dir
 
 if not os.path.exists(out_dir): #make output directory
     try:
@@ -46,12 +46,12 @@ df = pd.DataFrame(columns = cols)
 for i in range(0,n_splits):
     
     #load split input, get W mx for each
-    fname = stab_dir + "k" + str(g) + "/a_" + str(i) + "_k" + str(g) + ".mat" #MODIFY to match path to files, if appropriate
+    fname = stab_dir + "k" + str(g) + "/a_" + str(i) + "_k" + str(g) + ".mat" 
     resA = scipy.io.loadmat(fname)
     Wa = resA['W']
     ea = resA['recon']
         
-    fname = stab_dir + "k" + str(g) + "/b_" + str(i) + "_k" + str(g) + ".mat" #MODIDFY to match path to files, if appropriate
+    fname = stab_dir + "k" + str(g) + "/b_" + str(i) + "_k" + str(g) + ".mat" 
     resB = scipy.io.loadmat(fname)
     Wb = resB['W']
     eb = resB['recon']
