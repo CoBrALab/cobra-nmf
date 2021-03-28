@@ -25,8 +25,6 @@ group.add_argument(
 group.add_argument(
     '--mask_file', help='path to CIVET midline mask',required=True)
 group.add_argument(
-    '--file', help='path to CIVET midline mask',required=True)
-group.add_argument(
     '--output_dir', help='directory to store outputs',required=True)
 
 args=parser.parse_args()
