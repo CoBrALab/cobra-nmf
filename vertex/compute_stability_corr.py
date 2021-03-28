@@ -7,8 +7,27 @@ import scipy.io
 from scipy.io import savemat, loadmat
 from sklearn.metrics.pairwise import cosine_similarity
 import errno
-n_splits = 10
-g = sys.argv[1]
+import argparse
+
+parser=argparse.ArgumentParser(
+    description='''This script creates stratified input matrices for stability analysis,
+    stores outputs as .mat files in stability_splits directory''')
+
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument('--n_folds', help='number of folds', type=int, default=10)
+
+group.add_argument(
+    "--stability_results_dir",help="parent dir of stability nmf outputs", required=True)
+
+group.add_argument(
+    "--k",help="granularity to assess", type=int, required=True)
+
+
+args=parser.parse_args()
+
+n_splits = args.n_folds
+g = args.k
 
 out_dir = "stability_correlations/" #name of output directory. MODIFY if you like
 stab_dir = "stability_res/" #MODIFY path to location where .mat outputs from nmf for stability analysis are
