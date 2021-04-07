@@ -74,7 +74,7 @@ np.savetxt(left_statmap,left_outarray)
 right_outarray = np.zeros((n_vertex,compnum+1))
 for comp in range(0,compnum):
     valid_idx = 0
-    for idx in range(0,n_vertex)):
+    for idx in range(0,n_vertex):
         if midline_mask[idx] == 1:
             right_outarray[idx,comp] = right_W[valid_idx,comp]
             valid_idx +=1

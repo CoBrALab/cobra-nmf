@@ -29,8 +29,7 @@ args=parser.parse_args()
 
 #plot stability and error gradient on same plot 
 
-#df_stab = pd.read_csv(sys.argv[1])
-df_stab = args.stability_correlations
+df_stab = pd.read_csv(args.stability_correlations)
 
 #fix formatting of recon error values - remove [[ and ]] from start/end
 reconA_corrected=[] #list of corrected reconA vals
