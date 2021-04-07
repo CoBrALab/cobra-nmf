@@ -35,7 +35,7 @@ midline_mask = np.loadtxt(args.mask_file)
 n_vertex=np.shape(midline_mask)[0]
 
 if not os.path.exists(args.output_dir):
-    os.mkdir(out_dir)
+    os.mkdir(args.output_dir)
     
 #load spatial components
 W = scipy.io.loadmat(args.nmf_results)
@@ -67,7 +67,7 @@ for idx in range(0,n_vertex):
     if midline_mask[idx] == 1:
         left_outarray[idx,-1] = left_cluster[valid_idx,0]
         valid_idx +=1
-left_statmap = out_dir + "/left_k" + str(compnum) + ".txt"
+left_statmap = args.output_dir + "/left_k" + str(compnum) + ".txt"
 np.savetxt(left_statmap,left_outarray)
 
 
@@ -91,5 +91,5 @@ for idx in range(0,n_vertex):
     if midline_mask[idx] == 1:
         right_outarray[idx,-1] = right_cluster[valid_idx,0]
         valid_idx +=1
-right_statmap = out_dir + "/right_k" + str(compnum) + ".txt"
+right_statmap = args.output_dir + "/right_k" + str(compnum) + ".txt"
 np.savetxt(right_statmap,right_outarray)
