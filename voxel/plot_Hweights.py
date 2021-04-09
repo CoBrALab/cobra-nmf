@@ -26,11 +26,9 @@ group = parser.add_argument_group(title="Execution options")
 group.add_argument(
     '--nmf_weights', help='.mat file containing nmf results',required=True)
 group.add_argument(
-    '--output', help='output .png filename',required=True)
+    '--minimum', type=float, help='min value',required=False)
 group.add_argument(
-    '--minimum', type=float, help='min value',required=False,default=-2)
-group.add_argument(
-    '--maximum', type=float, help='max value',required=False,default=2)
+    '--maximum', type=float, help='max value',required=False)
 group.add_argument(
     '--width', type=float, help='figure width',required=False,default=16)
 group.add_argument(
@@ -39,6 +37,7 @@ group.add_argument(
 args=parser.parse_args()
 
 h=hdf5storage.loadmat(args.nmf_weights)['H']
+n_components = np.shape(h)[0]
 
 #heat mapping for H matrix
 def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
@@ -72,7 +71,34 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
     if title:
         plt.title(title, fontsize=30)
     plt.savefig(fname, bbox_inches='tight')
+    plt.close()
     
-
+#plot zscored H
 h_z=scipy.stats.zscore(h,axis=1)
-heatmapping(h_z,args.minimum,args.maximum+0.0001,2,args.width,args.height,title="Hweights",fname=args.output)    
+fname = 'H_k' + str(n_components) + '_zscore_components.png'
+heatmapping(h_z,-2.5,2.50001,2.5,args.width,args.height,title="Hweights",fname=fname)
+
+
+#plot mean normalized H
+h_norm=np.zeros_like(h)
+for r in range(0,np.shape(h)[0]):
+    row_avg = np.mean(h[r,:])
+    for c in range(0,np.shape(h)[1]):
+        h_norm[r,c] = h[r,c]/row_avg
+
+if args.minimum is None:
+    args.minimum = 0.75
+
+if args.maximum is None:
+    args.maximum = 1.25
+fname = 'H_k' + str(n_components) + '_meannormalize.png'
+heatmapping(h_norm,args.minimum,args.maximum+0.0001,0.25,args.width,args.height,title="Hweights",fname=fname)
+
+#plot raw h
+nticks=2
+raw_minn=np.percentile(h,0.01)
+raw_maxx=np.percentile(h,99.99)
+space = np.floor((raw_maxx - raw_minn)/nticks)
+fname = 'H_k' + str(n_components) + '_raw.png'
+heatmapping(h,raw_minn,raw_maxx,space,args.width,args.height,title="Hweights",fname=fname)
+
