@@ -56,7 +56,7 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
     ax.set_aspect('auto') #use 'auto' for automatic aspect
     ax.tick_params(axis='both',which='both',bottom='off',top='off',labelbottom='on',left='on',labelleft='on', pad = 5)
     ax.set_xlabel('')
-    ax.set_ylabel('Vertices', fontsize=40)
+    ax.set_ylabel('Components', fontsize=40)
     ax.yaxis.set_ticklabels([])
     ax.yaxis.labelpad = 5
     ax.tick_params(axis='y',size=15)
