@@ -46,12 +46,12 @@ df = pd.DataFrame(columns = cols)
 for i in range(0,n_splits):
     
     #load split input, get W mx for each
-    fname = stab_dir + "k" + str(g) + "/a_" + str(i) + ".mat" 
+    fname = stab_dir + "/k" + str(g) + "/a_" + str(i) + ".mat" 
     resA = scipy.io.loadmat(fname)
     Wa = resA['W']
     ea = resA['recon']
         
-    fname = stab_dir + "k" + str(g) + "/b_" + str(i) + ".mat" 
+    fname = stab_dir + "/k" + str(g) + "/b_" + str(i) + ".mat" 
     resB = scipy.io.loadmat(fname)
     Wb = resB['W']
     eb = resB['recon']
