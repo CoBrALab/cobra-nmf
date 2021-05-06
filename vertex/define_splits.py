@@ -32,12 +32,21 @@ group.add_argument(
 group.add_argument(
     "--stratifyby",help="demographic variables to stratify splits by", metavar='list', nargs='+', required=True)
 
+group.add_argument(
+    "--norm", help='z scoring direction', default='all', choices=['all','vertex','subject'])
 
 args=parser.parse_args()
 
 def save_mat(x,key,fname):
     print("Saving ", np.shape(x), key, "to", fname)
     scipy.io.savemat(fname, {'X': x})
+
+#lookup dictionary for normalization, used to set axis in z scoring
+norm_lookup = {
+    'all' : None,
+    'vertex' : 1,
+    'subject' : 0
+}
 
 #read in demographic spreadsheet with subject ids, age, prisma etc
 df_sorted = pd.read_csv(args.demo_csv)
@@ -110,15 +119,15 @@ for split in range(0, args.n_folds):
     #get data_a and data_b, containing ct data for A indicies and B indices
     data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
     #z score each 
-    a_mx_wb = scipy.stats.zscore(data_a,axis=None)
-    b_mx_wb = scipy.stats.zscore(data_b,axis=None)
+    a_mx_wb = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm])
+    b_mx_wb = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
 
     #repeat for each metric 
     for metric in input_list[1:]:
         data_all = data_dict[metric]
         data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-        data_a_z = scipy.stats.zscore(data_a,axis=None) #zscore
-        data_b_z = scipy.stats.zscore(data_b,axis=None)
+        data_a_z = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm]) #zscore
+        data_b_z = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
         a_mx_wb = np.concatenate((a_mx_wb,data_a_z),axis=1) #append z scored data for this metric to the rest
         b_mx_wb = np.concatenate((b_mx_wb,data_b_z),axis=1)
 
