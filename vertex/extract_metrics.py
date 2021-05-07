@@ -41,10 +41,14 @@ def load_vertex_data(df, column, n_subjects, n_vertex, mask=None):
         else:
             vertex_data = np.concatenate(
             (vertex_data, np.loadtxt(fname).reshape(1,n_vertex)), axis=0)
+
+    vertex_mean = np.mean(vertex_data,axis=0)
+    vertex_std = np.std(vertex_data,axis=0)
+
     if mask is not None:
-        return vertex_data[:,mask]
+        return vertex_data[:,mask], vertex_mean, vertex_std
     else:
-        return vertex_data
+        return vertex_data, vertex_mean, vertex_std
 
 def save_mat(x,key,fname):
     print("Saving ", np.shape(x), key, "to", fname)
@@ -65,8 +69,12 @@ for m_idx,m in enumerate(args.metric):
     metric = m[0] #args.metric is list of lists, each w length 1. we just want the metric, not whole list
     print('extracting', metric)
     for c_idx,c in enumerate(args.metric_column[m_idx]):
-        vertex_data = load_vertex_data(df_inputs,c,n_subjects,n_vertex, valid_vertices)
+        vertex_data, vertex_mean, vertex_std = load_vertex_data(df_inputs,c,n_subjects,n_vertex, valid_vertices)
+
+        np.savetxt(c + '_mean.txt',vertex_mean.astype('float32'),delimiter='\t',fmt='%f')
+        np.savetxt(c + '_stdev.txt',vertex_std.astype('float32'),delimiter='\t',fmt='%f')
         save_mat(np.transpose(vertex_data), c, c + '.mat')
+
         if c_idx == 0:
             metric_dict[metric] = np.transpose(vertex_data.copy())
         else:
