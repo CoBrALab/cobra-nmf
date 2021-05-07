@@ -65,5 +65,9 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
         plt.title(title, fontsize=30)
     plt.savefig(fname, bbox_inches='tight')
     
+plot_min = np.percentile(x,1)
+plot_max = np.percentile(x,99)
+cbar_spacing=np.floor((plot_min - plot_max)/2) #defualt to show cbar ticks at min, max, halfway
 
-heatmapping(x,np.min(x),np.max(x),0.5,16,8,title="Input",fname=sys.argv[2])    
+heatmapping(x,plot_min,plot_max+0.00001,cbar+spacing,16,8,title="Input",fname=sys.argv[2])    
+#+0.00001 is for edge case where max = exact intege
