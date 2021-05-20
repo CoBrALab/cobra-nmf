@@ -49,12 +49,12 @@ for i in range(0,n_splits):
     fname = stab_dir + "/k" + str(g) + "/a_" + str(i) + ".mat" 
     resA = scipy.io.loadmat(fname)
     Wa = resA['W']
-    ea = resA['recon']
+    ea = resA['recon'][0,0]
         
     fname = stab_dir + "/k" + str(g) + "/b_" + str(i) + ".mat" 
     resB = scipy.io.loadmat(fname)
     Wb = resB['W']
-    eb = resB['recon']
+    eb = resB['recon'][0,0]
 
     #assess correlation of identified parcel component scores - which parcels vary together?
     c_Wa = cosine_similarity(Wa)

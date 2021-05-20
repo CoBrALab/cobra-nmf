@@ -31,20 +31,6 @@ args=parser.parse_args()
 
 df_stab = pd.read_csv(args.stability_correlations)
 
-#fix formatting of recon error values - remove [[ and ]] from start/end
-reconA_corrected=[] #list of corrected reconA vals
-#cycle through recon a column, extract the  characters starting at index 3, and drop the last 2 (ie [2:-2])
-#append to corrected list, make float
-for val in df_stab['Recon_errorA'].values:
-    reconA_corrected.append((float(val[2:-2])))
-#repeat for reconB
-reconB_corrected=[] #list of corrected reconB vals
-for val in df_stab['Recon_errorB'].values:
-    reconB_corrected.append((float(val[2:-2])))
-#add these columns to your df_stab
-df_stab['Recon_errorA_corrected'] = reconA_corrected
-df_stab['Recon_errorB_corrected'] = reconB_corrected
-
 max_gran = np.max(df_stab['Granularity'].values)
 min_gran = np.min(df_stab['Granularity'].values)
 interval = args.spacing
@@ -62,8 +48,8 @@ for g in range(0,int(((max_gran - min_gran)/interval) + 1)):
 dict_errorgrad = {'Granularity' : np.arange(min_gran + interval,max_gran+1,interval).flatten()}
 dict_errorgrad['Index'] = np.arange(0, np.shape(dict_errorgrad['Granularity'])[0], 1)
 for iter in range(1,11):
-    dict_errorgrad["A_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorA_corrected']].values.flatten(), axis=0).tolist()
-    dict_errorgrad["B_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorB_corrected']].values.flatten(), axis=0).tolist()
+    dict_errorgrad["A_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorA']].values.flatten(), axis=0).tolist()
+    dict_errorgrad["B_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorB']].values.flatten(), axis=0).tolist()
 df_errorgrad = pd.DataFrame(data=dict_errorgrad, index = np.arange(1,np.shape(dict_errorgrad['Granularity'])[0]+1).flatten())
 
 error_grad_arr = np.zeros((1,np.shape(np.arange(min_gran + interval,max_gran+1,interval))[0]))
