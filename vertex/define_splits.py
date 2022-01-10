@@ -83,7 +83,7 @@ resid_vars = []
 #resid_vars.append(args.id_col)
 for x in args.residfor:
     resid_vars.append(x)
-# resid_vars = df_sorted[resid_vars].values - not really needed
+resid = df_sorted[resid_vars].values
 
 #define train data as subj ids (x)
 #define categorical vars as vars to stratify by (y, ie labels)
@@ -144,11 +144,11 @@ for split in range(0, args.n_folds):
     data_all = data_dict[metric]
     #get data_a and data_b, containing ct data for A indicies and B indices
     data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-    resid_vars_a = resid_vars[Asplits_indices[str(split)],:]; resid_vars_b = resid_vars[Bsplits_indices[str(split)],:]
+    resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
     #z score each
     if args.residfor is not None:
-        a_mx_wb = scipy.stats.zscore(residualize_mx(data_a, resid_vars_a),axis=norm_lookup[args.norm])
-        b_mx_wb = scipy.stats.zscore(residualize_mx(data_b, resid_vars_b),axis=norm_lookup[args.norm])
+        a_mx_wb = scipy.stats.zscore(residualize_mx(data_a, resid_a),axis=norm_lookup[args.norm])
+        b_mx_wb = scipy.stats.zscore(residualize_mx(data_b, resid_b),axis=norm_lookup[args.norm])
     else:
         a_mx_wb = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm])
         b_mx_wb = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
@@ -157,10 +157,10 @@ for split in range(0, args.n_folds):
     for metric in input_list[1:]:
         data_all = data_dict[metric]
         data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-        resid_vars_a = resid_vars[Asplits_indices[str(split)],:]; resid_vars_b = resid_vars[Bsplits_indices[str(split)],:]
+        resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
         if args.residfor is not None:
-            data_a_z = scipy.stats.zscore(residualize_mx(data_a, resid_vars_a),axis=norm_lookup[args.norm])
-            data_b_z = scipy.stats.zscore(residualize_mx(data_b, resid_vars_b),axis=norm_lookup[args.norm])
+            data_a_z = scipy.stats.zscore(residualize_mx(data_a, resid_a),axis=norm_lookup[args.norm])
+            data_b_z = scipy.stats.zscore(residualize_mx(data_b, resid_b),axis=norm_lookup[args.norm])
         else:
             data_a_z = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm]) #zscore
             data_b_z = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
