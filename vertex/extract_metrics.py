@@ -1,6 +1,6 @@
 #this script loads in raw .txt files from each subject and:
 #1) concatenates each file to build a vertex X subj matrix for each metric, for both left and right hemisphers
-#2) concatenates the left and right hemisphere data to build matrix of vertex X subj for whole brain 
+#2) concatenates the left and right hemisphere data to build matrix of vertex X subj for whole brain
 #3) write out .mat files containing left, right, whole brain data
 
 ## LOAD MODULES/SOFTWARE
@@ -27,6 +27,8 @@ group.add_argument(
     '--input_csv', help='demographic spreadsheet, must contain subject id',required=True)
 group.add_argument(
     '--mask_file', help='path to CIVET midline mask',required=True)
+group.add_argument(
+    '--output_suffix', help='suffix to add to output file name before extension, e.g. _smoothed', type=str, default="")
 
 args=parser.parse_args()
 
@@ -71,13 +73,13 @@ for m_idx,m in enumerate(args.metric):
     for c_idx,c in enumerate(args.metric_column[m_idx]):
         vertex_data, vertex_mean, vertex_std = load_vertex_data(df_inputs,c,n_subjects,n_vertex, valid_vertices)
 
-        np.savetxt(c + '_mean.txt',vertex_mean.astype('float32'),delimiter='\t',fmt='%f')
-        np.savetxt(c + '_stdev.txt',vertex_std.astype('float32'),delimiter='\t',fmt='%f')
-        save_mat(np.transpose(vertex_data), c, c + '.mat')
+        np.savetxt(c + args.output_suffix + '_mean.txt',vertex_mean.astype('float32'),delimiter='\t',fmt='%f')
+        np.savetxt(c + args.output_suffix + '_stdev.txt',vertex_std.astype('float32'),delimiter='\t',fmt='%f')
+        save_mat(np.transpose(vertex_data), c, c + args.output_suffix + '.mat')
 
         if c_idx == 0:
             metric_dict[metric] = np.transpose(vertex_data.copy())
         else:
             metric_dict[metric] = np.concatenate(
             (metric_dict[metric], np.transpose(vertex_data.copy())), axis=0)
-    save_mat(metric_dict[metric], 'wb_' + metric, 'wb_' + metric + '.mat')
+    save_mat(metric_dict[metric], 'wb_' + metric, 'wb_' + metric + args.output_suffix + '.mat')

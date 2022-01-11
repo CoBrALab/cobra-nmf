@@ -11,6 +11,7 @@ import scipy.stats
 from scipy.io import savemat, loadmat
 import sklearn
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn import linear_model
 import argparse
 
 parser=argparse.ArgumentParser(
@@ -35,11 +36,29 @@ group.add_argument(
 group.add_argument(
     "--norm", help='z scoring direction', default='all', choices=['all','vertex','subject'])
 
+group.add_argument(
+    "--residfor", help='measures to residualize for, must be in demographic spreadsheet', metavar='list', nargs='*')
+
 args=parser.parse_args()
 
 def save_mat(x,key,fname):
     print("Saving ", np.shape(x), key, "to", fname)
     scipy.io.savemat(fname, {'X': x})
+
+# mx_raw = vertex x subject matrix, x = subject x variables of interest matrix ??
+def residualize_mx(mx_raw, x):
+    mx_raw = mx_raw.transpose() # result = n_subjects x n_vertices
+    n_subjects, n_vertex = np.shape(mx_raw)
+    mx_resid = np.zeros_like(mx_raw)
+    regr = linear_model.LinearRegression()
+    for vertex in range(0,n_vertex):
+        y = mx_raw[:,vertex].reshape(n_subjects,1)
+        regr.fit(x,y)
+        predicted=regr.predict(x)
+        resid=y-predicted
+        mx_resid[:,vertex] = resid.flatten() # collapse into 1D
+    mx_resid = mx_resid.transpose()
+    return mx_resid
 
 #lookup dictionary for normalization, used to set axis in z scoring
 norm_lookup = {
@@ -58,6 +77,13 @@ demo_vars.append(args.id_col)
 for x in args.stratifyby:
     demo_vars.append(x)
 demo = df_sorted[demo_vars].values
+
+# create matrix with variables to residualize for
+resid_vars = []
+#resid_vars.append(args.id_col)
+for x in args.residfor:
+    resid_vars.append(x)
+resid = df_sorted[resid_vars].values
 
 #define train data as subj ids (x)
 #define categorical vars as vars to stratify by (y, ie labels)
@@ -78,7 +104,7 @@ iter=0
 for train_index, test_index in sss.split(X, y):
     Asplits_indices[str(iter)] = train_index;
     Bsplits_indices[str(iter)] = test_index;
-    
+
     ID_list = []
     s = train_index[0]
     ID_list.append(df_sorted[args.id_col].iloc[s])
@@ -118,16 +144,26 @@ for split in range(0, args.n_folds):
     data_all = data_dict[metric]
     #get data_a and data_b, containing ct data for A indicies and B indices
     data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-    #z score each 
-    a_mx_wb = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm])
-    b_mx_wb = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
+    resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
+    #z score each
+    if args.residfor is not None:
+        a_mx_wb = scipy.stats.zscore(residualize_mx(data_a, resid_a),axis=norm_lookup[args.norm])
+        b_mx_wb = scipy.stats.zscore(residualize_mx(data_b, resid_b),axis=norm_lookup[args.norm])
+    else:
+        a_mx_wb = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm])
+        b_mx_wb = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
 
-    #repeat for each metric 
+    #repeat for each metric
     for metric in input_list[1:]:
         data_all = data_dict[metric]
         data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-        data_a_z = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm]) #zscore
-        data_b_z = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
+        resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
+        if args.residfor is not None:
+            data_a_z = scipy.stats.zscore(residualize_mx(data_a, resid_a),axis=norm_lookup[args.norm])
+            data_b_z = scipy.stats.zscore(residualize_mx(data_b, resid_b),axis=norm_lookup[args.norm])
+        else:
+            data_a_z = scipy.stats.zscore(data_a,axis=norm_lookup[args.norm]) #zscore
+            data_b_z = scipy.stats.zscore(data_b,axis=norm_lookup[args.norm])
         a_mx_wb = np.concatenate((a_mx_wb,data_a_z),axis=1) #append z scored data for this metric to the rest
         b_mx_wb = np.concatenate((b_mx_wb,data_b_z),axis=1)
 
@@ -138,4 +174,3 @@ for split in range(0, args.n_folds):
     #write out
     save_mat(a_mx_shift_wb, 'split a_' + str(split), out_dir + "a_" + str(split) + ".mat")
     save_mat(b_mx_shift_wb, 'split b_' + str(split), out_dir + "b_" + str(split) + ".mat")
-
