@@ -45,7 +45,7 @@ def save_mat(x,key,fname):
     print("Saving ", np.shape(x), key, "to", fname)
     scipy.io.savemat(fname, {'X': x})
 
-# mx_raw = vertex x subject matrix, x = subject x variables of interest matrix ??
+# mx_raw = vertex x subject matrix, x = subject x variables of interest matrix
 def residualize_mx(mx_raw, x):
     mx_raw = mx_raw.transpose() # result = n_subjects x n_vertices
     n_subjects, n_vertex = np.shape(mx_raw)
@@ -79,11 +79,12 @@ for x in args.stratifyby:
 demo = df_sorted[demo_vars].values
 
 # create matrix with variables to residualize for
-resid_vars = []
-#resid_vars.append(args.id_col)
-for x in args.residfor:
-    resid_vars.append(x)
-resid = df_sorted[resid_vars].values
+if args.residfor is not None:
+    resid_vars = []
+    #resid_vars.append(args.id_col)
+    for x in args.residfor:
+        resid_vars.append(x)
+    resid = df_sorted[resid_vars].values
 
 #define train data as subj ids (x)
 #define categorical vars as vars to stratify by (y, ie labels)
@@ -144,9 +145,9 @@ for split in range(0, args.n_folds):
     data_all = data_dict[metric]
     #get data_a and data_b, containing ct data for A indicies and B indices
     data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-    resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
     #z score each
     if args.residfor is not None:
+        resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
         a_mx_wb = scipy.stats.zscore(residualize_mx(data_a, resid_a),axis=norm_lookup[args.norm])
         b_mx_wb = scipy.stats.zscore(residualize_mx(data_b, resid_b),axis=norm_lookup[args.norm])
     else:
@@ -157,8 +158,8 @@ for split in range(0, args.n_folds):
     for metric in input_list[1:]:
         data_all = data_dict[metric]
         data_a = data_all[:,Asplits_indices[str(split)]]; data_b = data_all[:,Bsplits_indices[str(split)]]
-        resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
         if args.residfor is not None:
+            resid_a = resid[Asplits_indices[str(split)],:]; resid_b = resid[Bsplits_indices[str(split)],:]
             data_a_z = scipy.stats.zscore(residualize_mx(data_a, resid_a),axis=norm_lookup[args.norm])
             data_b_z = scipy.stats.zscore(residualize_mx(data_b, resid_b),axis=norm_lookup[args.norm])
         else:
