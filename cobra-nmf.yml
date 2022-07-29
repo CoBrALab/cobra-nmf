@@ -1,0 +1,13 @@
+name: cobranmf
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.6
+  - pip
+  - pip:
+    - nibabel==3.2.0
+    - nilearn==0.6.2
+    - dipy==1.2.0
+    - joblib==0.17.0
+    - hdf5storage==0.1.15
