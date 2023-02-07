@@ -1,0 +1,19 @@
+addpath('/home/m/mchakrav/patelmo6/scratch/pnmf_bin/brainlets');
+%read command line arguments
+arg_list = argv();
+filename = arg_list{1};
+k=str2num(arg_list{2});
+
+%load input
+load(filename);
+
+%check dimensions, not necesary
+size(X)
+
+%run pnmf
+[W,H,recon] = opnmf_mem_cobra(X, k, [], 4,50000,[],[],100,[]);
+size(W)
+
+%save output
+save('-v7',arg_list{3},'W','H','recon');
+exit
