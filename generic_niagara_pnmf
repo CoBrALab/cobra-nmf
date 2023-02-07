@@ -1,4 +1,4 @@
-addpath('/home/m/mchakrav/patelmo6/scratch/pnmf_bin/brainlets');
+addpath('cobra_brainparts');
 %read command line arguments
 arg_list = argv();
 filename = arg_list{1};
