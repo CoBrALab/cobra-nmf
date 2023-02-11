@@ -7,11 +7,30 @@ import scipy.io
 from scipy.io import savemat, loadmat
 from sklearn.metrics.pairwise import cosine_similarity
 import errno
-n_splits = 10
-g = sys.argv[1]
+import argparse
 
-out_dir = "stability_correlations/" #name of output directory. MODIFY if you like
-stab_dir = "stability_res/" #MODIFY path to location where .mat outputs from nmf for stability analysis are
+parser=argparse.ArgumentParser(
+    description='''This script computed stability metrics (spatial similarity,
+    recon error) for a specified number of components and stores results in a .csv file''')
+
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument('--n_folds', help='number of folds', type=int, default=10)
+
+group.add_argument(
+    "--stability_results_dir",help="parent dir of stability nmf outputs", required=True)
+
+group.add_argument(
+    "--k",help="granularity to assess", type=int, required=True)
+
+
+args=parser.parse_args()
+
+n_splits = args.n_folds
+g = args.k
+
+out_dir = "stability_correlations/" 
+stab_dir = args.stability_results_dir
 
 if not os.path.exists(out_dir): #make output directory
     try:
@@ -27,15 +46,15 @@ df = pd.DataFrame(columns = cols)
 for i in range(0,n_splits):
     
     #load split input, get W mx for each
-    fname = stab_dir + "k" + str(g) + "/a_" + str(i) + "_k" + str(g) + ".mat" #MODIFY to match path to files, if appropriate
+    fname = stab_dir + "/k" + str(g) + "/a_" + str(i) + ".mat" 
     resA = scipy.io.loadmat(fname)
     Wa = resA['W']
-    ea = resA['recon']
+    ea = resA['recon'][0,0]
         
-    fname = stab_dir + "k" + str(g) + "/b_" + str(i) + "_k" + str(g) + ".mat" #MODIDFY to match path to files, if appropriate
+    fname = stab_dir + "/k" + str(g) + "/b_" + str(i) + ".mat" 
     resB = scipy.io.loadmat(fname)
     Wb = resB['W']
-    eb = resB['recon']
+    eb = resB['recon'][0,0]
 
     #assess correlation of identified parcel component scores - which parcels vary together?
     c_Wa = cosine_similarity(Wa)

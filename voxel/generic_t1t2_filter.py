@@ -3,10 +3,6 @@ import glob
 import pandas as pd
 import numpy as np
 import sys
-sys.path.append('/scratch/m/mchakrav/patelmo6/pnmf_bin/TractREC_p3/') #MODIFY to point to your cpy of TractREC
-#from TractREC import * #my custom stuff
-import TractREC as tr
-import t1t2_outlier_correction as outlier
 import argparse
 
 parser=argparse.ArgumentParser(
@@ -20,9 +16,14 @@ group.add_argument('--t1t2_stem', help='stem of all t1t2 file names (eg. t1t2_st
 group.add_argument('--label_stem', help='stem of all label file names',required=True)
 group.add_argument('--left_gp_lb', help='label value for left gp', default=0, type=int)    
 group.add_argument('--right_gp_lb', help='label value for right gp', default=0, type=int)
+group.add_argument('--tract_rec', help='path to TractREC library', required=True)
 
 args=parser.parse_args()
 
+sys.path.append(args.tract_rec) 
+#from TractREC import * #my custom stuff
+import TractREC as tr
+import t1t2_outlier_correction as outlier
 
 lblegend=pd.read_csv(args.lookup)
 lblegend=lblegend.set_index(['Label_val'])

@@ -8,28 +8,32 @@ from matplotlib import cm
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, FixedFormatter, FixedLocator
 from matplotlib import pyplot as plt
 plt.switch_backend('Agg')
+import argparse
+
+parser=argparse.ArgumentParser(
+    description='''This script takes in computed stability metrics and plots
+    number of components on the x axis, stability coefficient and graident of recon error on y''')
+
+group = parser.add_argument_group(title="Execution options")
+
+group.add_argument('--spacing', help='interval between computed ks', type=int, default=1)
+
+group.add_argument(
+    "--stability_correlations",help="csv containing computed stability metrics", required=True)
+
+group.add_argument(
+    "--output",help="output .png file to store plot", required=True)
+
+
+args=parser.parse_args()
 
 #plot stability and error gradient on same plot 
 
-df_stab = pd.read_csv(sys.argv[1])
-
-#fix formatting of recon error values - remove [[ and ]] from start/end
-reconA_corrected=[] #list of corrected reconA vals
-#cycle through recon a column, extract the  characters starting at index 3, and drop the last 2 (ie [2:-2])
-#append to corrected list, make float
-for val in df_stab['Recon_errorA'].values:
-    reconA_corrected.append((float(val[2:-2])))
-#repeat for reconB
-reconB_corrected=[] #list of corrected reconB vals
-for val in df_stab['Recon_errorB'].values:
-    reconB_corrected.append((float(val[2:-2])))
-#add these columns to your df_stab
-df_stab['Recon_errorA_corrected'] = reconA_corrected
-df_stab['Recon_errorB_corrected'] = reconB_corrected
+df_stab = pd.read_csv(args.stability_correlations)
 
 max_gran = np.max(df_stab['Granularity'].values)
 min_gran = np.min(df_stab['Granularity'].values)
-interval=2 #MODIFY - this should represent the spacing of granularities investigated. ie if 2,4,5,8... interval = 2
+interval = args.spacing
 
 split_corr = []
 for g in np.arange(min_gran,max_gran+1,interval):
@@ -44,8 +48,8 @@ for g in range(0,int(((max_gran - min_gran)/interval) + 1)):
 dict_errorgrad = {'Granularity' : np.arange(min_gran + interval,max_gran+1,interval).flatten()}
 dict_errorgrad['Index'] = np.arange(0, np.shape(dict_errorgrad['Granularity'])[0], 1)
 for iter in range(1,11):
-    dict_errorgrad["A_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorA_corrected']].values.flatten(), axis=0).tolist()
-    dict_errorgrad["B_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorB_corrected']].values.flatten(), axis=0).tolist()
+    dict_errorgrad["A_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorA']].values.flatten(), axis=0).tolist()
+    dict_errorgrad["B_iter" + str(iter)] = np.diff(df_stab.loc[df_stab['Iteration'] == iter][['Recon_errorB']].values.flatten(), axis=0).tolist()
 df_errorgrad = pd.DataFrame(data=dict_errorgrad, index = np.arange(1,np.shape(dict_errorgrad['Granularity'])[0]+1).flatten())
 
 error_grad_arr = np.zeros((1,np.shape(np.arange(min_gran + interval,max_gran+1,interval))[0]))
@@ -76,5 +80,4 @@ ax2.errorbar(grad_err_x,error_grad_arr.flatten(),yerr=error_grad_std_arr.flatten
 ax2.tick_params(axis='y', labelcolor=color, labelsize=20)
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.title('NMF Stability', fontsize=30)
-plt.savefig(sys.argv[2], dpi='figure', bbox_inches='tight')
-#plt.show()
+plt.savefig(args.output, dpi='figure', bbox_inches='tight')

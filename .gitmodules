@@ -1,0 +1,3 @@
+[submodule "cobra_brainparts"]
+	path = cobra_brainparts
+	url = https://github.com/raihaan/brainparts.git
