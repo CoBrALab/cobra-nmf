@@ -73,6 +73,7 @@ def heatmapping(data,minn,maxx,cbar_tix,fig_width,fig_height,title='',fname=''):
         plt.title(title, fontsize=30)
     plt.savefig(fname, bbox_inches='tight')
     
+
 if args.minimum is None:
     args.minimum = np.min(x)
 
