@@ -1,7 +1,7 @@
 #this script loads in raw .txt files from each subject and:
 #1) concatenates each file to build a vertex X subj matrix for each metric, for both left and right hemisphers
 #2) concatenates the left and right hemisphere data to build matrix of vertex X subj for whole brain
-#3) write out .mat files containing left, right, whole brain data
+#3) write out .mat files containing left, right, whole brain data (option to save as .npz as well)
 
 ## LOAD MODULES/SOFTWARE
 import os
@@ -17,10 +17,11 @@ import argparse
 
 parser=argparse.ArgumentParser(
     description='''This script extracts vertex data from .txt files and outputs a vertex x subject matrix
-    in .mat format''')
+    in .mat (or .npz) format''')
 
 parser.add_argument('--metric',type=str, nargs='+', action='append')
 parser.add_argument('--metric_column',type=str, nargs='+', action='append')
+
 group = parser.add_argument_group(title="Execution options")
 
 group.add_argument(
@@ -29,8 +30,13 @@ group.add_argument(
     '--mask_file', help='path to CIVET midline mask',required=True)
 group.add_argument(
     '--output_suffix', help='suffix to add to output file name before extension, e.g. _smoothed', type=str, default="")
+group.add_argument(
+    '--save_npz', help='option to save matrix as .npz, otherwise saves as .mat', required=False, action='store_true')
+
 
 args=parser.parse_args()
+
+
 
 def load_vertex_data(df, column, n_subjects, n_vertex, mask=None):
 #helper function to cycle through array of filepaths, load data, build matrix
@@ -52,9 +58,23 @@ def load_vertex_data(df, column, n_subjects, n_vertex, mask=None):
     else:
         return vertex_data, vertex_mean, vertex_std
 
-def save_mat(x,key,fname):
-    print("Saving ", np.shape(x), key, "to", fname)
-    scipy.io.savemat(fname, {'X': x})
+
+
+def save_matrix(x,key,fname,as_npz):
+    # If we want to save as .npz
+    if as_npz:
+        fname = fname + '.npz'
+        print("Saving ", np.shape(x), key, "to", fname)
+        np.savez(fname, X=x)
+
+    # Otherwise save as .mat
+    else:
+        fname = fname + '.mat'
+        print("Saving ", np.shape(x), key, "to", fname)
+        savemat(fname, {'X': x})
+
+
+
 
 #LOAD CIVET MASK TO IDENTIFY MIDLINE/ CORPOS COLLOSUM REGION
 #IDENTIFY 'VALID VERTICES' - IE VERTICES NOT IN THIS REGION
@@ -67,6 +87,7 @@ n_subjects=df_inputs.shape[0] #num rows in spreadsheet
 n_vertex=np.shape(midline_mask)[0]
 
 metric_dict = {}
+
 for m_idx,m in enumerate(args.metric):
     metric = m[0] #args.metric is list of lists, each w length 1. we just want the metric, not whole list
     print('extracting', metric)
@@ -75,11 +96,13 @@ for m_idx,m in enumerate(args.metric):
 
         np.savetxt(c + args.output_suffix + '_mean.txt',vertex_mean.astype('float32'),delimiter='\t',fmt='%f')
         np.savetxt(c + args.output_suffix + '_stdev.txt',vertex_std.astype('float32'),delimiter='\t',fmt='%f')
-        save_mat(np.transpose(vertex_data), c, c + args.output_suffix + '.mat')
+
+        save_matrix(np.transpose(vertex_data), c, c + args.output_suffix, args.save_npz)
 
         if c_idx == 0:
             metric_dict[metric] = np.transpose(vertex_data.copy())
         else:
             metric_dict[metric] = np.concatenate(
             (metric_dict[metric], np.transpose(vertex_data.copy())), axis=0)
-    save_mat(metric_dict[metric], 'wb_' + metric, 'wb_' + metric + args.output_suffix + '.mat')
+
+    save_matrix(metric_dict[metric], 'wb_' + metric, 'wb_' + metric + args.output_suffix, args.save_npz)

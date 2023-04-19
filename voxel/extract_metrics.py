@@ -10,7 +10,7 @@ import sys
 
 parser=argparse.ArgumentParser(
     description='''This script extracts voxel data from nifti files and outputs a voxel x subject matrix
-    in .mat format''')
+    in .mat (or .npz) format''')
 
 parser.add_argument(
     "--metric",help="metric to extract", metavar='T1T2',required=True)
@@ -32,10 +32,29 @@ group.add_argument(
     '--id_col', help='name of subject Id column in demographic sheet',required=True)
 group.add_argument(
     '--data_dir', help='directory containing subject data folders', required=True)
- 
-group.add_argument('--tract_rec', help='path to TractREC library', required=True)
+group.add_argument(
+    '--tract_rec', help='path to TractREC library', required=True)
+group.add_argument(
+    '--save_npz', help='option to save matrix as .npz, otherwise saves as .mat', required=False, action='store_true')
+
 
 args=parser.parse_args()
+
+
+# Function to save matrix in .mat or .npz format
+def save_matrix(x, key, fname, as_npz):
+    # If we want to save as .npz
+    if as_npz:
+        fname = fname + '.npz'
+        print("Saving ", np.shape(x), key, "to", fname)
+        np.savez(fname, X=x)
+
+    # Otherwise save as .mat
+    else:
+        fname = fname + '.mat'
+        print("Saving ", np.shape(x), key, "to", fname)
+        savemat(fname, {'X': x})
+
 
 
 #load TractREC 
@@ -78,8 +97,7 @@ metric_stack=res[0].data
 for img in range(1,len(metric_IDs)):
     metric_stack=np.concatenate((metric_stack,res[img].data),axis=0)    
 
-#Save the matrix in .mat format. nmf wants voxels X subjects, so save the transpose of metric_stack
+#Save the matrix in .mat (or .npz) format. nmf wants voxels X subjects, so save the transpose of metric_stack
 metric_out = np.transpose(metric_stack)
-print(np.shape(metric_out))
-scipy.io.savemat('raw_' + args.metric + '.mat', mdict={'X': metric_out}) 
+save_matrix(metric_out, args.metric, 'raw' + args.metric, args.save_npz)
 
